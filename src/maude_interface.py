@@ -17,7 +17,7 @@ def maude_to_pandas(maude_file_path: str) -> pandas.DataFrame:
         return_frame = pandas.read_csv(maude_file_path, sep='|', encoding='ANSI')
     except ParserError as e:
         check_bad_csv(maude_file_path)
-        raise e
+        raise
 
     return return_frame
 
@@ -83,6 +83,8 @@ def check_bad_csv(check_file_path: str):
     import csv
     import sys
     csv.field_size_limit(sys.maxsize)
+    logging.debug("[check_bad_csv]Checking probably bad CSV file: {}".format(check_file_path))
+    #csv.field_size_limit(sys.maxsize)
     with open(check_file_path, 'r') as f:
         reader = csv.reader(f, delimiter='|', quoting=csv.QUOTE_NONE)
         first_row = next(reader)
