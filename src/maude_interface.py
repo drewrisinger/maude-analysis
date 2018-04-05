@@ -1,4 +1,5 @@
 import pandas
+import numpy as np
 from typing import Iterable, Any
 import logging
 import os
@@ -6,6 +7,7 @@ import csv
 #import sys
 
 from pandas.errors import ParserError
+from pandas.api.types import CategoricalDtype
 
 
 def maude_to_pandas(maude_file_path: str, dtype: Any = "str") -> pandas.DataFrame:
@@ -16,14 +18,38 @@ def maude_to_pandas(maude_file_path: str, dtype: Any = "str") -> pandas.DataFram
     :return: Pandas dataframe containing all the data
     """
     logging.debug("Reading file {} with dtype={}".format(maude_file_path, dtype))
+    true_vals = [True, "True", "Y"]
+    false_vals = [False, "False", "N"]
     try:
         return_frame = pandas.read_csv(maude_file_path, delimiter='|', encoding='ANSI', dtype=dtype,
-                                       error_bad_lines=False, quoting=csv.QUOTE_NONE)
+                                       error_bad_lines=False, quoting=csv.QUOTE_NONE, true_values=true_vals,
+                                       false_values=false_vals, skipinitialspace=True)
     except ParserError:
         check_bad_csv(maude_file_path)
         raise
 
     return return_frame
+
+def read_mdr_file(maude_file_path: str) -> pandas.DataFrame:
+    mdr_col_types = {"MDR_REPORT_KEY": np.int, "REPORT_SOURCE_CODE": CategoricalDtype(categories=["P", "U", "D", "M"], ordered=False),
+                     "INITIAL_REPORT_TO_FDA": CategoricalDtype(categories=["Y", "N", "U", "*"]), "EVENT_TYPE": CategoricalDtype(categories=["D", "IN", "IL", "IJ", "M", "O", *])}
+    date_columns = ['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT', 'DATE_FACILITY_AWARE', 'REPORT_DATE',
+                    'DATE_REPORT_TO_FDA', 'DATE_REPORT_TO_MANUFACTURER', 'DATE_MANUFACTURER_RECEIVED',
+                    'DEVICE_DATE_OF_MANUFACTURE', 'DATE_ADDED', 'DATE_CHANGED']
+    #todo: parse
+
+
+def read_dev_file(maude_file_path: str) -> pandas.DataFrame:
+    dev_col_types = {"MDR_REPORT_KEY": np.int}
+    date_cols = ['DATE_RECEIVED', 'DATE_RECEIVED', 'EXPIRATION_DATE_OF_DEVICE', 'DATE_RETURNED_TO_MANUFACTURER', 'BASELINE_DATE_FIRST_MARKETED', 'BASELINE_DATE_CEASED_MARKETING']
+    # todo: use na_values for {"DATE_REMOVED_FLAG": "A", "DEVICE_OPERATOR": ["*", "NA", "NI", "UNK"]}
+    # note: for sequence number, to strip (after splitting, use: " ".split().lstrip(string.digits + string.whitespace + string.punctuation + "IAO")
+    #todo: parse
+
+
+def read_patient_file(maude_file_path: str) -> pandas.DataFrame:
+    date_cols = ["DATE_RECEIVED"]
+    # todo: read
 
 
 ######################################################
@@ -79,9 +105,11 @@ def compile_maude_database(directory_path: str, reference_directory_path: str, b
             logging.debug("Attempting to add file {} to dataset".format(file))
             try:
                 merge_file = maude_to_pandas(file_path)
-                entire_dataset.merge(maude_to_pandas(file_path), on=mdr_base_key)
+                entire_dataset.merge(merge_file, on=mdr_base_key)
             except KeyError:
                 logging.warning("File {} does not have key {}".format(file, mdr_base_key))
+            finally:
+                del merge_file
 
     # entire_dataset = add_data_to_mdr(entire_dataset, directory_files)
     problem_codes = maude_to_pandas(problem_code_path)
