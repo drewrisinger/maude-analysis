@@ -8,6 +8,13 @@ import csv
 
 from pandas.errors import ParserError
 from pandas.api.types import CategoricalDtype
+from functools import partial
+
+true_vals = [True, "True", "Y"]
+false_vals = [False, "False", "N"]
+read_maude_csv = partial(pandas.read_csv, delimiter='|', encoding='ANSI',
+                                       error_bad_lines=False, quoting=csv.QUOTE_NONE, true_values=true_vals,
+                                       false_values=false_vals, skipinitialspace=True)
 
 
 def maude_to_pandas(maude_file_path: str, dtype: Any = "str") -> pandas.DataFrame:
@@ -18,12 +25,8 @@ def maude_to_pandas(maude_file_path: str, dtype: Any = "str") -> pandas.DataFram
     :return: Pandas dataframe containing all the data
     """
     logging.debug("Reading file {} with dtype={}".format(maude_file_path, dtype))
-    true_vals = [True, "True", "Y"]
-    false_vals = [False, "False", "N"]
     try:
-        return_frame = pandas.read_csv(maude_file_path, delimiter='|', encoding='ANSI', dtype=dtype,
-                                       error_bad_lines=False, quoting=csv.QUOTE_NONE, true_values=true_vals,
-                                       false_values=false_vals, skipinitialspace=True)
+        return_frame = read_maude_csv(maude_file_path, dtype=dtype)
     except ParserError:
         check_bad_csv(maude_file_path)
         raise
@@ -36,6 +39,10 @@ def read_mdr_file(maude_file_path: str) -> pandas.DataFrame:
     date_columns = ['DATE_RECEIVED', 'DATE_REPORT', 'DATE_OF_EVENT', 'DATE_FACILITY_AWARE', 'REPORT_DATE',
                     'DATE_REPORT_TO_FDA', 'DATE_REPORT_TO_MANUFACTURER', 'DATE_MANUFACTURER_RECEIVED',
                     'DEVICE_DATE_OF_MANUFACTURE', 'DATE_ADDED', 'DATE_CHANGED']
+    try:
+        return_frame = read_maude_csv(maude_file_path, dtype=mdr_col_types, parse_dates=date_columns)
+
+    return return_frame
     #todo: parse
 
 
@@ -45,6 +52,11 @@ def read_dev_file(maude_file_path: str) -> pandas.DataFrame:
     # todo: use na_values for {"DATE_REMOVED_FLAG": "A", "DEVICE_OPERATOR": ["*", "NA", "NI", "UNK"]}
     # note: for sequence number, to strip (after splitting, use: " ".split().lstrip(string.digits + string.whitespace + string.punctuation + "IAO")
     #todo: parse
+
+    try:
+        return_frame = read_maude_csv(maude_file_path, dtype=dev_col_types, parse_dates=date_cols)
+
+    return return_frame
 
 
 def read_patient_file(maude_file_path: str) -> pandas.DataFrame:
