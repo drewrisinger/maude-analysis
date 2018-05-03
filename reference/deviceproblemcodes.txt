@@ -1,5 +1,5 @@
 DEVICE_PROBLEM_CODE|DEVICE_PROBLEM_DESCRIPTION|ERR_TYPE
-1001|Failure to run on AC/DC|Software
+1001|Failure to run on AC/DC|Hardware
 1002|Abnormal|Unknown
 1003|Absorption|Hardware
 1004|Accessory incompatible|Unknown
@@ -16,7 +16,7 @@ DEVICE_PROBLEM_CODE|DEVICE_PROBLEM_DESCRIPTION|ERR_TYPE
 1015|Alarm, intermittent|Both
 1016|Low audible alarm|Both
 1017|Alarm, failure of low flow|Unknown
-1019|Not audible alarm|Hardware
+1019|Not audible alarm|Both
 1020|Alarm, failure of fast heart rate|Unknown
 1021|Alarm, no lead|Unknown
 1022|Alarm not visible|Unknown
