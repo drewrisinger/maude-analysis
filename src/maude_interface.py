@@ -189,15 +189,18 @@ def get_all_text_data(directory_path: str, years: Iterable = None) -> pandas.Dat
 
     for file in directory_files:
         if file.startswith('foitext') and file.endswith(".txt"):
-            if years is None or int(file.lstrip("foitext").rstrip(".txt")) in years:
-                file_path = os.path.join(directory_path, file)
-                logging.debug("Adding file {} to dataset".format(file))
-                if all_text_records is None:
-                    # initialize
-                    all_text_records = read_maude_text_file(file_path)
-                else:
-                    all_text_records = pandas.concat([all_text_records, read_maude_text_file(file_path)],
-                                                     verify_integrity=True, ignore_index=True)
+            try:
+                if years is None or int(file.lstrip("foitext").rstrip(".txt")) in years:
+                    file_path = os.path.join(directory_path, file)
+                    logging.debug("Adding file {} to dataset".format(file))
+                    if all_text_records is None:
+                        # initialize
+                        all_text_records = read_maude_text_file(file_path)
+                    else:
+                        all_text_records = pandas.concat([all_text_records, read_maude_text_file(file_path)],
+                                                         verify_integrity=True, ignore_index=True)
+            except ValueError:
+                continue
 
     if all_text_records is None:
         logging.error("No valid files found. Try changing the directory or the years under consideration.")
